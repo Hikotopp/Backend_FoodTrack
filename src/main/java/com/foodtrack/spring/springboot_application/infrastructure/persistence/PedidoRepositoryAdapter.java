@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,6 +28,7 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
 
     @Override
     public Optional<Pedido> findById(Long id) {
+        Objects.requireNonNull(id, "El id no puede ser nulo");
         return jpaPedidoRepository.findById(id).map(this::toDomain);
     }
 
@@ -46,18 +48,24 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
 
     @Override
     public Pedido save(Pedido pedido) {
-        PedidoEntity entity = toEntity(pedido);
-        return toDomain(jpaPedidoRepository.save(entity));
+        PedidoEntity entity = Objects.requireNonNull(toEntity(pedido), "Entity must not be null");
+        PedidoEntity savedEntity = Objects.requireNonNull(jpaPedidoRepository.save(entity), "Saved entity must not be null");
+        return toDomain(savedEntity);
     }
 
     @Override
     public void deleteById(Long id) {
+        Objects.requireNonNull(id, "El id no puede ser nulo");
         jpaPedidoRepository.deleteById(id);
     }
 
     private Pedido toDomain(PedidoEntity entity) {
+        Objects.requireNonNull(entity, "Entity must not be null");
         Pedido pedido = new Pedido();
-        pedido.setId(entity.getId());
+        Long id = entity.getId();
+        if (id != null) {
+            pedido.setId(id);
+        }
         pedido.setMesaId(entity.getMesaId());
         pedido.setUsuarioId(entity.getUsuarioId());
         pedido.setFechaHora(entity.getFechaHora());
@@ -68,7 +76,10 @@ public class PedidoRepositoryAdapter implements PedidoRepositoryPort {
 
     private PedidoEntity toEntity(Pedido domain) {
         PedidoEntity entity = new PedidoEntity();
-        entity.setId(domain.getId());
+        Long id = domain.getId();
+        if (id != null) {
+            entity.setId(id);
+        }
         entity.setMesaId(domain.getMesaId());
         entity.setUsuarioId(domain.getUsuarioId());
         entity.setFechaHora(domain.getFechaHora());

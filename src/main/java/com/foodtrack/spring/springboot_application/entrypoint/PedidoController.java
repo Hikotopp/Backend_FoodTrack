@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/pedidos")
@@ -33,7 +34,9 @@ public class PedidoController {
     @PostMapping
     public ResponseEntity<Pedido> crearPedido(@RequestBody Pedido pedido) {
         Pedido creado = pedidoUseCase.guardar(pedido);
-        return ResponseEntity.created(URI.create("/api/pedidos/" + creado.getId())).body(creado);
+        Long creadoId = Objects.requireNonNull(creado.getId(), "El pedido creado debe tener un ID");
+        URI uri = Objects.requireNonNull(URI.create("/api/pedidos/" + creadoId), "URI creada no puede ser null");
+        return ResponseEntity.created(uri).body(creado);
     }
 
     @PutMapping("/{id}/estado")

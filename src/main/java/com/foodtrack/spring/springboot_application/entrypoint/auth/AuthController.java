@@ -9,11 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,20 +24,36 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new employee account")
-    public ResponseEntity<AuthenticationView> register(@Valid @RequestBody RegisterRequest request) {
-        AuthenticationView response = authUseCase.register(request.fullName(), request.email(), request.password());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
+        AuthenticationView view = authUseCase.register(
+                request.fullName(),
+                request.email(),
+                request.password()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(view));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Authenticate a user and return a JWT token")
-    public ResponseEntity<AuthenticationView> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authUseCase.login(request.email(), request.password()));
+    public ResponseEntity<AuthenticationResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthenticationView view = authUseCase.login(request.email(), request.password());
+        return ResponseEntity.ok(toResponse(view));
     }
 
     @GetMapping("/me")
     @Operation(summary = "Get the current authenticated user profile")
     public ResponseEntity<UserProfileView> me(Authentication authentication) {
         return ResponseEntity.ok(authUseCase.getProfile(authentication.getName()));
+    }
+
+    //  Mapper interno (simple y suficiente)
+    private AuthenticationResponse toResponse(AuthenticationView view) {
+        return new AuthenticationResponse(
+                view.token(),
+                view.fullName(),
+                view.email(),
+                view.role().name()
+        );
     }
 }

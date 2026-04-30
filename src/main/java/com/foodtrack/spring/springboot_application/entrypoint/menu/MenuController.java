@@ -19,14 +19,20 @@ import java.util.List;
 public class MenuController {
 
     private final MenuUseCase menuUseCase;
+  
+private final MenuItemRestMapper menuItemMapper;
 
-    public MenuController(MenuUseCase menuUseCase) {
-        this.menuUseCase = menuUseCase;
-    }
-
+public MenuController(MenuUseCase menuUseCase, MenuItemRestMapper menuItemMapper) {
+    this.menuUseCase = menuUseCase;
+    this.menuItemMapper = menuItemMapper;
+}
     @GetMapping
     @Operation(summary = "List all active gourmet menu items")
-    public ResponseEntity<List<MenuItem>> listMenuItems() {
-        return ResponseEntity.ok(menuUseCase.listMenuItems());
+    public ResponseEntity<List<MenuItemResponse>> listMenuItems() {
+        List<MenuItem> items = menuUseCase.listMenuItems();
+        List<MenuItemResponse> response = items.stream()
+                .map(menuItemMapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 }

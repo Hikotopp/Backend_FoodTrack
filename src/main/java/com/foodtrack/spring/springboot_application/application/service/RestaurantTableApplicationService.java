@@ -16,7 +16,10 @@ import com.foodtrack.spring.springboot_application.domain.model.OrderLine;
 import com.foodtrack.spring.springboot_application.domain.model.OrderStatus;
 import com.foodtrack.spring.springboot_application.domain.model.RestaurantTable;
 import com.foodtrack.spring.springboot_application.domain.model.TableStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,7 +30,10 @@ import java.util.Locale;
 import java.util.Map;
 
 @Service
+@Transactional
 public class RestaurantTableApplicationService implements TableUseCase {
+
+    private static final Logger logger = LoggerFactory.getLogger(RestaurantTableApplicationService.class);
 
     private final RestaurantTableRepositoryPort restaurantTableRepositoryPort;
     private final CustomerOrderRepositoryPort customerOrderRepositoryPort;
@@ -45,6 +51,7 @@ public class RestaurantTableApplicationService implements TableUseCase {
         this.menuItemRepositoryPort = menuItemRepositoryPort;
         this.userRepositoryPort = userRepositoryPort;
     }
+
 
     @Override
     public List<TableSummaryView> listTables() {

@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +20,8 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtService jwtService;
     private final ApplicationUserDetailsService userDetailsService;
 
@@ -29,6 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        logger.debug("Processing request: {} {}", request.getMethod(), request.getRequestURI());
+        
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -50,9 +56,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    logger.debug("JWT authenticated user: {}", username);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (io.jsonwebtoken.security.SecurityException | io.jsonwebtoken.MalformedJwtException e) {
+            logger.warn("Invalid JWT signature or malformed token: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            logger.warn("JWT token expired: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
+        } catch (io.jsonwebtoken.UnsupportedJwtException e) {
+            logger.warn("Unsupported JWT token: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
+        } catch (IllegalArgumentException e) {
+            logger.warn("JWT claims string is empty: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
+        } catch (Exception e) {
+            logger.error("Unexpected error during JWT authentication", e);
             SecurityContextHolder.clearContext();
         }
 

@@ -29,6 +29,7 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     @Override
+    @SuppressWarnings("null")
     public AppUser save(AppUser user) {
         return appUserMapper.toDomain(jpaUserRepository.save(appUserMapper.toEntity(user)));
     }

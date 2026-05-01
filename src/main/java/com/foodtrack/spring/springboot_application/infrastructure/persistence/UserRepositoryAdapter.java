@@ -5,6 +5,7 @@ import com.foodtrack.spring.springboot_application.domain.model.AppUser;
 import com.foodtrack.spring.springboot_application.infrastructure.persistence.mapper.AppUserMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -16,6 +17,19 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     public UserRepositoryAdapter(JpaUserRepository jpaUserRepository, AppUserMapper appUserMapper) {
         this.jpaUserRepository = jpaUserRepository;
         this.appUserMapper = appUserMapper;
+    }
+
+    @Override
+    public List<AppUser> findAll() {
+        return jpaUserRepository.findAll().stream()
+                .map(appUserMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    @SuppressWarnings("null")
+    public Optional<AppUser> findById(Long id) {
+        return jpaUserRepository.findById(id).map(appUserMapper::toDomain);
     }
 
     @Override

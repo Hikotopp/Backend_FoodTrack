@@ -7,6 +7,7 @@ import com.foodtrack.spring.springboot_application.domain.exception.BusinessRule
 import com.foodtrack.spring.springboot_application.domain.exception.ResourceNotFoundException;
 import com.foodtrack.spring.springboot_application.domain.model.AppUser;
 import com.foodtrack.spring.springboot_application.domain.model.UserRole;
+import com.foodtrack.spring.springboot_application.infrastructure.persistence.JpaCustomerOrderRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,16 @@ import java.util.Locale;
 public class UserAdministrationApplicationService implements UserAdministrationUseCase {
 
     private final UserRepositoryPort userRepositoryPort;
+    private final JpaCustomerOrderRepository customerOrderRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserAdministrationApplicationService(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
+    public UserAdministrationApplicationService(
+            UserRepositoryPort userRepositoryPort,
+            JpaCustomerOrderRepository customerOrderRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userRepositoryPort = userRepositoryPort;
+        this.customerOrderRepository = customerOrderRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -66,6 +73,25 @@ public class UserAdministrationApplicationService implements UserAdministrationU
                 role
         ));
         return toView(updated);
+    }
+
+    @Override
+    public void deleteUser(Long userId, String currentUserEmail) {
+        AppUser user = userRepositoryPort.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User was not found."));
+
+        if (user.email().equalsIgnoreCase(normalizeEmail(currentUserEmail))) {
+            throw new BusinessRuleException("No puedes eliminar tu propia cuenta desde esta sesion.");
+        }
+
+        AppUser currentUser = userRepositoryPort.findByEmail(normalizeEmail(currentUserEmail))
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user was not found."));
+
+        int reassignedOrders = customerOrderRepository.existsByCreatedByUserId(userId)
+                ? customerOrderRepository.reassignCreatedOrders(userId, currentUser.id())
+                : 0;
+
+        userRepositoryPort.deleteById(userId);
     }
 
     private UserAccountView toView(AppUser user) {

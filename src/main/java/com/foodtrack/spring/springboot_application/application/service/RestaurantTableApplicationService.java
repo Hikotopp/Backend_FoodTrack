@@ -220,9 +220,13 @@ public class RestaurantTableApplicationService implements TableUseCase {
         }
 
         CustomerOrder closedOrder = recalculateOrder(currentOrder, currentOrder.lines(), OrderStatus.CLOSED);
-        customerOrderRepositoryPort.save(closedOrder);
+        CustomerOrder savedClosedOrder = customerOrderRepositoryPort.save(closedOrder);
         restaurantTableRepositoryPort.save(new RestaurantTable(table.id(), table.tableNumber(), TableStatus.AVAILABLE));
-        logger.info("Order closed for table {}", tableId);
+        logger.info(
+                "Order {} closed and persisted for table {}. ReportService will include it in the next report.",
+                savedClosedOrder.id(),
+                tableId
+        );
         return getDashboard(tableId);
     }
 

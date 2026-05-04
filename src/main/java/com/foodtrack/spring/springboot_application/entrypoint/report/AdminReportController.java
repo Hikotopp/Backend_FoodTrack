@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/admin/reports")
@@ -30,8 +31,8 @@ public class AdminReportController {
             RestClient.Builder restClientBuilder,
             @Value("${report-service.base-url:http://localhost:8081}") String reportServiceBaseUrl
     ) {
-        this.reportServiceBaseUrl = reportServiceBaseUrl;
-        this.restClient = restClientBuilder.baseUrl(reportServiceBaseUrl).build();
+        this.reportServiceBaseUrl = Objects.requireNonNull(reportServiceBaseUrl, "reportServiceBaseUrl");
+        this.restClient = restClientBuilder.baseUrl(this.reportServiceBaseUrl).build();
     }
 
     @PostMapping("/generate-now")
